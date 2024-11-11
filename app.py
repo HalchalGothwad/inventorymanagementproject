@@ -9,10 +9,10 @@ import numpy as np
 app = Flask(__name__)
 
 # Paths to data files
-excel_file_path = r'C:\Users\Lenovo\Documents\inventory\inventorymanagementproject\data\stock.xlsx'
+excel_file_path = r'data/stock.xlsx'
 power_bi_url = "https://app.powerbi.com/reportEmbed?reportId=522f1632-86c9-4dd1-a2c4-5e7055a898de&autoAuth=true&ctid=e5ba4765-79e6-4ae2-8686-668b280f722c"
 
-past_orders_file_path = r'C:\Users\Lenovo\Documents\inventory\inventorymanagementproject\data\pastorders.xlsx'
+past_orders_file_path = r'data/pastorders.xlsx'
 past_orders_data = pd.read_excel(past_orders_file_path)
 
 # Check required columns in the past orders data
