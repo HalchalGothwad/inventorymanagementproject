@@ -16,19 +16,23 @@ past_orders_file_path = r'data/pastorders.xlsx'
 # Load past orders data
 try:
     past_orders_data = pd.read_excel(past_orders_file_path)
-    past_orders_data.columns = past_orders_data.columns.str.strip()  # Clean column names
+    # Clean column names by stripping spaces
+    past_orders_data.columns = past_orders_data.columns.str.strip()
 
-    # Debugging: Print column names
+    # Debugging: Print column names and sample of the data
     print("Columns in past orders file:", past_orders_data.columns)
+    print("First few rows of past orders data:")
+    print(past_orders_data.head())
 
+    # Ensure 'PDName' is in the columns
     if 'PDName' not in past_orders_data.columns or 'Order Date' not in past_orders_data.columns or 'Order Quantity' not in past_orders_data.columns:
         raise KeyError("'PDName', 'Order Date', or 'Order Quantity' column not found in pastorders Excel file.")
 
-    # Convert 'Order Date' to datetime
+    # Convert 'Order Date' to datetime and handle invalid dates
     past_orders_data['Order Date'] = pd.to_datetime(past_orders_data['Order Date'], errors='coerce')
     past_orders_data = past_orders_data.dropna(subset=['Order Date'])  # Drop rows with invalid dates
 
-    # Print sample of the data
+    print("Cleaned past orders data:")
     print(past_orders_data.head())
 except Exception as e:
     print(f"Error loading past orders data: {e}")
@@ -37,11 +41,15 @@ except Exception as e:
 # Load SKU (inventory) data
 try:
     sku_data = pd.read_excel(excel_file_path)
-    sku_data.columns = sku_data.columns.str.strip()  # Clean column names
+    # Clean column names by stripping spaces
+    sku_data.columns = sku_data.columns.str.strip()
 
-    # Debugging: Print column names
+    # Debugging: Print column names and sample of the data
     print("Columns in SKU data file:", sku_data.columns)
+    print("First few rows of SKU data:")
+    print(sku_data.head())
 
+    # Ensure 'PDName' and 'Units' are in the columns
     if 'PDName' not in sku_data.columns or 'Units' not in sku_data.columns:
         raise KeyError("'PDName' or 'Units' column not found in the Excel file.")
 
@@ -49,7 +57,7 @@ try:
     sku_data = sku_data.drop_duplicates(subset='PDName').set_index('PDName')
     inventory = sku_data.to_dict('index')  # Convert to dictionary for easy access
 
-    # Print sample of the data
+    print("Cleaned SKU data (inventory):")
     print(sku_data.head())
 except Exception as e:
     print(f"Error loading SKU data: {e}")
@@ -180,7 +188,6 @@ for pdname, forecast_data in forecast_results.items():
     forecast_results[pdname]['safety_stock'] = safety_stock
     forecast_results[pdname]['eoq'] = eoq
 
-
 @app.route('/view_forecast', methods=['POST'])
 def view_forecast():
     pdname = request.form['pdname']
@@ -217,8 +224,7 @@ def view_forecast():
         units=units,  # Add units for forecast data
         forecast_results=forecast_results
     )
-
-
+# Function to calculate safety stock, reorder point, and other inventory insights
 def calculate_inventory_insights(inventory, forecast_results, lead_time_weeks, service_level):
     insights = {}
     for pdname, data in forecast_results.items():
@@ -226,11 +232,19 @@ def calculate_inventory_insights(inventory, forecast_results, lead_time_weeks, s
         current_stock = inventory.get(pdname, {}).get('Current Stock Quantity', 0)
         units = inventory.get(pdname, {}).get('Units', 'N/A')
 
+        # Calculate safety stock
         safety_stock = calculate_safety_stock(forecasted_demand, lead_time_weeks, service_level)
+
+        # Calculate the average weekly demand
         avg_weekly_demand = forecasted_demand.mean()
+
+        # Calculate reorder point
         reorder_point = avg_weekly_demand * lead_time_weeks + safety_stock
 
+        # Check if the product needs to be reordered
         needs_reorder = current_stock <= reorder_point
+
+        # Check for potential stockout (if current stock is less than the forecasted cumulative demand)
         potential_stockout = current_stock < forecasted_demand.cumsum().iloc[0]
 
         insights[pdname] = {
@@ -246,6 +260,14 @@ def calculate_inventory_insights(inventory, forecast_results, lead_time_weeks, s
 
 @app.route('/inventory_insights')
 def inventory_insights():
+    lead_time_weeks = 2  # Example: 2 weeks lead time
+    service_level = 0.95  # 95% service level
+    insights = calculate_inventory_insights(inventory, forecast_results, lead_time_weeks, service_level)
+    return render_template('inventory_insights.html', insights=insights)
+
+
+@app.route('/inventory_insights')
+def inventory_insights():
     lead_time_weeks = 2
     service_level = 0.95
     insights = calculate_inventory_insights(inventory, forecast_results, lead_time_weeks, service_level)
@@ -257,5 +279,6 @@ def etl_explanation():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
