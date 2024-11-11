@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETL Process Explanation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Reset some basic styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    color: #333;
+    background-color: #f4f4f9;
+    line-height: 1.6;
+    padding: 20px;
+}
+
+/* General Layout */
+h1, h2 {
+    color: #2b2b52;
+    margin-bottom: 10px;
+}
+
+h1 {
+    font-size: 2rem;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+h2 {
+    font-size: 1.5rem;
+    margin-top: 20px;
+}
+
+/* Paragraphs */
+p {
+    margin-bottom: 15px;
+    color: #5c5c5c;
+}
+
+/* Code Blocks */
+pre {
+    background-color: #f1f1f1;
+    border-left: 5px solid #3f51b5;
+    padding: 15px;
+    overflow-x: auto;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+}
+
+code {
+    font-family: Consolas, 'Courier New', monospace;
+    color: #3f51b5;
+}
+
+/* List Styles */
+ul {
+    margin-left: 20px;
+    margin-bottom: 20px;
+}
+
+li {
+    margin-bottom: 8px;
+}
+
+/* Diagram Styling */
+pre.diagram {
+    background-color: #e9ecef;
+    padding: 10px;
+    border: 1px solid #c0c0c0;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+/* Link Styling */
+a {
+    color: #3f51b5;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: #2b2b52;
+}
+
+/* Button Styling */
+.back-btn {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #3f51b5;
+    color: #fff;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.back-btn:hover {
+    background-color: #303f9f;
+}
+
+    </style>
+</head>
+<body>
+    <h1>ETL Process Explanation</h1>
+    <p>This page explains the ETL (Extract, Transform, Load) pipeline used in the inventory management application. The ETL process is critical for handling and preparing data from various sources, enabling efficient data management and forecasting.</p>
+
+    <h2>1. Extract Phase</h2>
+    <p>In the <strong>Extract</strong> phase, data is gathered from Excel files that store inventory and order data.</p>
+    <pre><code>past_orders_data = pd.read_excel(past_orders_file_path)
+sku_data = pd.read_excel(excel_file_path)</code></pre>
+    <p>These files are read into <code>pandas DataFrames</code> to facilitate data processing.</p>
+
+    <h2>2. Transform Phase</h2>
+    <p>During the <strong>Transform</strong> phase, the application performs various data cleaning and transformation tasks, such as:</p>
+    <ul>
+        <li><strong>Cleaning column names</strong>: Removes extra spaces in column names for consistent access.</li>
+        <li><strong>Ensuring required columns exist</strong>: Checks for essential columns like <code>PDName</code>, <code>Order Date</code>, and <code>Order Quantity</code>.</li>
+        <li><strong>Date parsing and removing invalid rows</strong>: Converts <code>Order Date</code> to datetime format, removing any rows with invalid dates.</li>
+        <li><strong>Grouping and resampling data</strong>: Groups past order data by <code>PDName</code> and resamples monthly to create time series data.</li>
+        <li><strong>Forecasting</strong>: An ARIMA model is applied to forecast future demand, which allows for analysis of demand trends and stock optimization.</li>
+    </ul>
+    <pre><code>ts_data = group.set_index('Order Date')['Order Quantity'].resample('M').sum().fillna(0)
+model = ARIMA(ts_data, order=(1, 1, 1))
+fitted_model = model.fit()
+forecast = fitted_model.forecast(steps=4)</code></pre>
+
+    <h2>3. Load Phase</h2>
+    <p>In the <strong>Load</strong> phase, transformed data is stored into memory for easy access throughout the application. Additionally, any updates are saved back to the original Excel file to ensure persistent data storage.</p>
+    <ul>
+        <li><strong>Loading into Python dictionaries</strong>: Inventory and forecast results are stored in dictionaries (<code>inventory</code> and <code>forecast_results</code>), making them accessible across various application routes.</li>
+        <li><strong>Saving updates to Excel</strong>: Any changes in inventory are saved back to <code>stock.xlsx</code>, keeping records consistent.</li>
+    </ul>
+    <pre><code>inventory = sku_data.to_dict('index')
+sku_data.to_excel(excel_file_path, index=True)</code></pre>
+
+    <h2>Diagram of the ETL Process</h2>
+    <pre class="diagram"><code>
+Excel Files              Python DataFrames                Application Memory                UI (HTML Templates)
+   (Extract)                    (Transform)                     (Load)                         (Display Results)
+   ----------                   ------------                 -----------------                 ------------------
+   stock.xlsx             Clean, Convert Dates            Python Dictionary                   inventory_insights.html
+   pastorders.xlsx        Aggregate, Forecast             {inventory, forecast_results}       home.html, forecast_result.html
+    </code></pre>
+
+    <h2>Application Integration</h2>
+    <p>The ETL process is integrated seamlessly within the application, allowing real-time updates and easy retrieval of inventory insights. You can view inventory and demand forecasts directly on the home page, with insights on reorder points, safety stock, and EOQ calculations available in the <code>inventory_insights</code> page.</p>
+
+    <a href="{{ url_for('home') }}" class="back-btn">Go Back to Home</a>
+</body>
+</html>

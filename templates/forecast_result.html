@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Forecast Result for {{ pdname }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        h2, h3 {
+            color: #333;
+        }
+        img {
+            width: 100%;
+            border-radius: 8px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin: 5px 0;
+            padding: 5px;
+            background-color: #f4f7fc;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            color: #3498db;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .collapsible {
+            background-color: #f1f1f1;
+            color: #333;
+            cursor: pointer;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 18px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .collapsible:after {
+            content: '\002B';
+            font-weight: bold;
+            float: right;
+        }
+        .collapsible.active:after {
+            content: "\2212";
+        }
+        .content {
+            padding: 0 18px;
+            display: none;
+            overflow: hidden;
+            background-color: #f4f7fc;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 15px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Forecast vs Actual Data for {{ pdname }}</h2>
+        <img src="{{ url_for('static', filename='forecast_plot.png') }}" alt="Forecast Plot">
+
+        <h3>Forecast Quantity for Next 4 Weeks:</h3>
+        <ul>
+            {% for value in forecast_values %}
+                <li>
+                    <strong>Week {{ loop.index }}:</strong> {{ value | int }} {{ units }}
+                    <span class="tooltip">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltiptext">Forecasted quantity for this week</span>
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <button type="button" class="collapsible">Model Performance Metrics</button>
+        <div class="content">
+            <ul>
+                <li>Mean Squared Error (MSE): {{ forecast_results[pdname]['mse'] | int }}</li>
+                <li>Mean Bias Error (MBE): {{ forecast_results[pdname]['mbe'] | int }}</li>
+            </ul>
+        </div>
+
+        <button type="button" class="collapsible">Inventory Optimization Recommendations</button>
+        <div class="content">
+            <ul>
+                <li>
+                    Safety Stock: {{ forecast_results[pdname]['safety_stock'] | int }} {{ units }}
+                    <span class="tooltip">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltiptext">Buffer stock to prevent stockouts due to unexpected demand.</span>
+                    </span>
+                </li>
+                <li>
+                    Economic Order Quantity (EOQ): {{ forecast_results[pdname]['eoq'] | int }} {{ units }}
+                    <span class="tooltip">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltiptext">Order quantity that minimizes total inventory costs.</span>
+                    </span>
+                </li>
+                <li>
+                    Optimal Stock Level: {{ forecast_results[pdname]['optimal_stock_level'] | int }} {{ units }}
+                    <span class="tooltip">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltiptext">Ideal stock level to balance costs and availability.</span>
+                    </span>
+                </li>
+            </ul>
+        </div>
+
+        <a href="{{ url_for('home') }}" class="btn">Back to Inventory Management</a>
+    </div>
+
+    <script>
+        // JavaScript for collapsible sections
+        document.querySelectorAll(".collapsible").forEach(button => {
+            button.addEventListener("click", function() {
+                this.classList.toggle("active");
+                const content = this.nextElementSibling;
+                if (content.style.display === "block") {
+                    content.style.display = "none";
+                } else {
+                    content.style.display = "block";
+                }
+            });
+        });
+    </script>
+</body>
+</html>

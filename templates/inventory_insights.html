@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventory Insights</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f7fc; }
+        .container { max-width: 900px; margin: auto; padding: 20px; background: #fff; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        h2 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: center; }
+        th { background: #f8f9fa; }
+        .alert { color: red; font-weight: bold; }
+        .success { color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Inventory Insights</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Current Stock</th>
+                    <th>Units</th>
+                    <th>Reorder Point</th>
+                    <th>Safety Stock</th>
+                    <th>Reorder Needed</th>
+                    <th>Potential Stockout</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pdname, data in insights.items() %}
+                <tr>
+                    <td>{{ pdname }}</td>  <!-- Display product name -->
+                    <td>{{ data.current_stock | int }}</td>
+                    <td>{{ data.units }}</td>  <!-- Display units -->
+                    <td>{{ data.reorder_point | int }}</td>
+                    <td>{{ data.safety_stock | int }}</td>
+                    <td>
+                        {% if data.needs_reorder %}
+                            <span class="alert">Yes</span>
+                        {% else %}
+                            <span class="success">No</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if data.potential_stockout %}
+                            <span class="alert">Yes</span>
+                        {% else %}
+                            <span class="success">No</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

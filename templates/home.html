@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fc;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        h2, h3 {
+            color: #333;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 900px;
+            margin: 20px;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        form {
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        input, select, button {
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .message {
+            background-color: #f9c2c2;
+            color: #d9534f;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        iframe {
+            border: none;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .form-section {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .form-section select, .form-section input {
+            max-width: 300px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            margin-top: 20px;
+            color: #fff;
+            background-color: #007bff;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .footer-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .etl-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #3f51b5;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .etl-link:hover {
+            background-color: #303f9f;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Inventory Management</h2>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="messages" aria-live="polite">
+                {% for category, message in messages %}
+                    <div class="message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Add Product Form -->
+    <div class="form-section">
+        <h3>Add New Product</h3>
+        <form action="{{ url_for('add_product') }}" method="POST">
+            <input type="text" name="pdname" placeholder="Product Name" required>
+            <input type="number" name="current_stock_quantity" placeholder="Quantity" min="0" required>
+            <input type="text" name="units" placeholder="Units (Nos/Kg)" required>
+            <input type="number" step="0.01" name="unit_price" placeholder="Unit Price" min="0" required>
+            <button type="submit">Add Product</button>
+        </form>
+    </div>
+
+    <!-- Update Stock Form -->
+    <div class="form-section">
+        <h3>Update Stock</h3>
+        <form action="{{ url_for('update_stock') }}" method="POST">
+            <select name="pdname" required>
+                {% for pdname in inventory %}
+                    <option value="{{ pdname }}">{{ pdname }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" name="quantity" placeholder="Quantity" min="0" required>
+            <button type="submit">Update Stock</button>
+        </form>
+    </div>
+
+    <!-- Subtract Stock Form -->
+    <div class="form-section">
+        <h3>Subtract Stock</h3>
+        <form action="{{ url_for('subtract_stock') }}" method="POST">
+            <select name="pdname" required>
+                {% for pdname in inventory %}
+                    <option value="{{ pdname }}">{{ pdname }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" name="quantity" placeholder="Quantity" min="0" required>
+            <button type="submit">Subtract Stock</button>
+        </form>
+    </div>
+
+    <!-- Real-Time Inventory Analysis Section -->
+    <div class="form-section">
+        <h3>Real-Time Inventory Analysis</h3>
+        <iframe width="100%" height="500" src="{{ power_bi_url }}" allowFullScreen="true"></iframe>
+    </div>
+
+    <!-- View Forecast Form -->
+    <div class="form-section">
+        <h3>View Forecast</h3>
+        <form action="{{ url_for('view_forecast') }}" method="POST">
+            <label for="pdname">Select Product for Forecast:</label>
+            <select name="pdname" id="pdname" required>
+                {% for pdname in forecast_results %}
+                    <option value="{{ pdname }}">{{ pdname }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit">View Forecast</button>
+        </form>
+    </div>
+</div>
+
+<!-- Inventory Insights Button -->
+<div class="footer-section">
+    <a href="{{ url_for('inventory_insights') }}" class="btn">View Inventory Insights</a>
+</div>
+<a href="{{ url_for('etl_explanation') }}" class="etl-link">Learn about the ETL Process</a>
+<script>
+    // Show flash messages for a brief period and then remove them
+    document.querySelectorAll('.message').forEach(function (message) {
+        setTimeout(function () {
+            message.style.transition = "opacity 0.5s ease";
+            message.style.opacity = 0;
+            setTimeout(() => message.remove(), 500);
+        }, 5000); // Fade out after 5 seconds
+    });
+
+    // Dynamic form validation for numbers (quantity, unit price)
+    document.querySelectorAll('input[type="number"]').forEach(function (input) {
+        input.addEventListener('input', function () {
+            if (input.value < 0) {
+                input.setCustomValidity('Please enter a positive value');
+            } else {
+                input.setCustomValidity('');
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
