@@ -13,29 +13,46 @@ excel_file_path = r'data/stock.xlsx'
 power_bi_url = "https://app.powerbi.com/reportEmbed?reportId=522f1632-86c9-4dd1-a2c4-5e7055a898de&autoAuth=true&ctid=e5ba4765-79e6-4ae2-8686-668b280f722c"
 past_orders_file_path = r'data/pastorders.xlsx'
 
-# Read past orders data and ensure correct columns are present
+# Load past orders data
 try:
     past_orders_data = pd.read_excel(past_orders_file_path)
-    if not {'PDName', 'Order Date', 'Order Quantity'}.issubset(past_orders_data.columns):
+    past_orders_data.columns = past_orders_data.columns.str.strip()  # Clean column names
+
+    # Debugging: Print column names
+    print("Columns in past orders file:", past_orders_data.columns)
+
+    if 'PDName' not in past_orders_data.columns or 'Order Date' not in past_orders_data.columns or 'Order Quantity' not in past_orders_data.columns:
         raise KeyError("'PDName', 'Order Date', or 'Order Quantity' column not found in pastorders Excel file.")
 
-    # Convert 'Order Date' to datetime and drop rows with invalid dates
+    # Convert 'Order Date' to datetime
     past_orders_data['Order Date'] = pd.to_datetime(past_orders_data['Order Date'], errors='coerce')
-    past_orders_data = past_orders_data.dropna(subset=['Order Date'])
+    past_orders_data = past_orders_data.dropna(subset=['Order Date'])  # Drop rows with invalid dates
+
+    # Print sample of the data
+    print(past_orders_data.head())
 except Exception as e:
+    print(f"Error loading past orders data: {e}")
     flash(f"Error loading past orders data: {e}", 'danger')
 
-# Load SKU data from Excel
+# Load SKU (inventory) data
 try:
     sku_data = pd.read_excel(excel_file_path)
     sku_data.columns = sku_data.columns.str.strip()  # Clean column names
+
+    # Debugging: Print column names
+    print("Columns in SKU data file:", sku_data.columns)
+
     if 'PDName' not in sku_data.columns or 'Units' not in sku_data.columns:
         raise KeyError("'PDName' or 'Units' column not found in the Excel file.")
 
-    # Remove duplicate product names and set 'PDName' as the index
+    # Set 'PDName' as the index and remove duplicates
     sku_data = sku_data.drop_duplicates(subset='PDName').set_index('PDName')
     inventory = sku_data.to_dict('index')  # Convert to dictionary for easy access
+
+    # Print sample of the data
+    print(sku_data.head())
 except Exception as e:
+    print(f"Error loading SKU data: {e}")
     flash(f"Error loading SKU data: {e}", 'danger')
 
 # Initialize forecast_results for products
@@ -44,12 +61,10 @@ for pdname, group in past_orders_data.groupby('PDName'):
     ts_data = group.set_index('Order Date')['Order Quantity'].resample('M').sum().fillna(0)
 
     try:
-        # Forecasting with ARIMA model
         model = ARIMA(ts_data, order=(1, 1, 1))
         fitted_model = model.fit()
         forecast = fitted_model.forecast(steps=4)
 
-        # If we have enough data points, calculate forecast accuracy
         if len(ts_data) >= 4:
             train_data, test_data = ts_data[:-4], ts_data[-4:]
             model = ARIMA(train_data, order=(1, 1, 1))
@@ -74,13 +89,10 @@ for pdname, group in past_orders_data.groupby('PDName'):
     except Exception as e:
         flash(f"Error forecasting for {pdname}: {e}", 'danger')
 
-
 # Flask Routes
 @app.route('/')
 def home():
-    return render_template('index.html', inventory=inventory, power_bi_url=power_bi_url,
-                           forecast_results=forecast_results)
-
+    return render_template('index.html', inventory=inventory, power_bi_url=power_bi_url, forecast_results=forecast_results)
 
 @app.route('/add_product', methods=['POST'])
 def add_product():
@@ -106,7 +118,6 @@ def add_product():
     sku_data.to_excel(excel_file_path, index=True)
     return redirect(url_for('home'))
 
-
 @app.route('/update_stock', methods=['POST'])
 def update_stock():
     pdname = request.form['pdname']
@@ -121,7 +132,6 @@ def update_stock():
     flash(f'Updated stock for {pdname}: New quantity is {inventory[pdname]["Current Stock Quantity"]}', 'success')
     sku_data.to_excel(excel_file_path, index=True)
     return redirect(url_for('home'))
-
 
 @app.route('/subtract_stock', methods=['POST'])
 def subtract_stock():
@@ -142,32 +152,28 @@ def subtract_stock():
     sku_data.to_excel(excel_file_path, index=True)
     return redirect(url_for('home'))
 
-
 def calculate_safety_stock(demand_forecast, lead_time, service_level):
     demand_std_dev = demand_forecast.std()
     z_score = np.percentile([service_level], service_level * 100)
     safety_stock = z_score * demand_std_dev * np.sqrt(lead_time)
     return safety_stock
 
-
 def calculate_eoq(annual_demand, order_cost, holding_cost):
     eoq = np.sqrt((2 * annual_demand * order_cost) / holding_cost)
     return eoq
 
-
-# Define constants for EOQ and Safety Stock
 service_level = 0.95
-average_lead_time = 2  # in months
+average_lead_time = 2
 order_cost = 50
-holding_cost_per_unit = 1.5  # weekly holding cost
+holding_cost_per_unit = 1.5
 
 for pdname, forecast_data in forecast_results.items():
     demand_forecast = forecast_data['forecast']
     current_stock = inventory[pdname]['Current Stock Quantity']
 
     safety_stock = calculate_safety_stock(demand_forecast, average_lead_time, service_level)
-    annual_demand = demand_forecast.sum() * 12  # Assuming monthly forecast
-    eoq = calculate_eoq(annual_demand, order_cost, holding_cost_per_unit * 52)  # Annual holding cost
+    annual_demand = demand_forecast.sum() * 12
+    eoq = calculate_eoq(annual_demand, order_cost, holding_cost_per_unit * 52)
     optimal_stock_level = eoq + safety_stock
 
     forecast_results[pdname]['optimal_stock_level'] = optimal_stock_level
@@ -238,7 +244,6 @@ def calculate_inventory_insights(inventory, forecast_results, lead_time_weeks, s
 
     return insights
 
-
 @app.route('/inventory_insights')
 def inventory_insights():
     lead_time_weeks = 2
@@ -246,12 +251,11 @@ def inventory_insights():
     insights = calculate_inventory_insights(inventory, forecast_results, lead_time_weeks, service_level)
     return render_template('inventory_insights.html', insights=insights)
 
-
 @app.route('/etl_explanation')
 def etl_explanation():
     return render_template('etl_explanation.html')
 
-
 if __name__ == '__main__':
     app.run(debug=True)
+
 
