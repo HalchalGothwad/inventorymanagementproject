@@ -1,4 +1,4 @@
-Inventory Management System
+Inventory Management System : 
 This project is a web-based inventory management system that uses Flask for the web application framework, Pandas for data manipulation, and ARIMA for time series forecasting. It allows for the management of stock levels, demand forecasting, and inventory insights to aid in decision-making for optimal stock control. The application includes an integration with Power BI for reporting.
 
 
