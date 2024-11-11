@@ -83,7 +83,7 @@ for pdname, group in past_orders_data.groupby('PDName'):
 # Flask Routes
 @app.route('/')
 def home():
-    return render_template('home.html', inventory=inventory, power_bi_url=power_bi_url, forecast_results=forecast_results)
+    return render_template('index.html', inventory=inventory, power_bi_url=power_bi_url, forecast_results=forecast_results)
 
 @app.route('/add_product', methods=['POST'])
 def add_product():
