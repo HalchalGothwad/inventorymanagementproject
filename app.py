@@ -9,9 +9,9 @@ import numpy as np
 app = Flask(__name__)
 
 # Paths to data files
-excel_file_path = r'stock.xlsx'
+excel_file_path = r'C:\Users\Lenovo\Documents\inventory\inventorymanagementproject\data\stock.xlsx'
 power_bi_url = "https://app.powerbi.com/reportEmbed?reportId=522f1632-86c9-4dd1-a2c4-5e7055a898de&autoAuth=true&ctid=e5ba4765-79e6-4ae2-8686-668b280f722c"
-past_orders_file_path = r'pastorders.xlsx'
+past_orders_file_path = r'C:\Users\Lenovo\Documents\inventory\inventorymanagementproject\data\pastorders.xlsx'
 
 # Load past orders data
 try:
@@ -202,29 +202,25 @@ def view_forecast():
 
     plt.figure(figsize=(10, 4))
     plt.plot(forecast_data['actual'].index, forecast_data['actual'], label='Actual')
-    plt.plot(forecast_data['forecast'].index, forecast_data['forecast'], label='Forecast')
-    plt.title(f"Forecast vs Actual Demand for {pdname}")
+    plt.plot(forecast_data['forecast'], label='Forecast')
+    plt.title(f'Forecast vs Actual for {pdname}')
     plt.legend()
-
-    static_dir = 'static'
-    if not os.path.exists(static_dir):
-        os.makedirs(static_dir)
-
-    plot_path = os.path.join(static_dir, 'forecast_plot.png')
-    plt.savefig(plot_path)
+    plt.xlabel('Date')
+    plt.ylabel('Quantity')
+    plt.grid(True)
+    forecast_image_path = os.path.join('static', f'{pdname}_forecast.png')
+    plt.savefig(forecast_image_path)
     plt.close()
 
-    forecast_values = forecast_data['forecast'].tolist()
+    return render_template('forecast_view.html', pdname=pdname, forecast_data=forecast_data, units=units, forecast_image=forecast_image_path)
 
-    return render_template(
-        'forecast_result.html',
-        pdname=pdname,
-        plot_path=plot_path,
-        forecast_values=forecast_values,
-        units=units,  # Add units for forecast data
-        forecast_results=forecast_results
-    )
-# Function to calculate safety stock, reorder point, and other inventory insights
+@app.route('/inventory_insights')
+def inventory_insights():
+    lead_time_weeks = 2  # Example: 2 weeks lead time
+    service_level = 0.95  # 95% service level
+    insights = calculate_inventory_insights(inventory, forecast_results, lead_time_weeks, service_level)
+    return render_template('inventory_insights.html', insights=insights)
+
 def calculate_inventory_insights(inventory, forecast_results, lead_time_weeks, service_level):
     insights = {}
     for pdname, data in forecast_results.items():
@@ -257,28 +253,13 @@ def calculate_inventory_insights(inventory, forecast_results, lead_time_weeks, s
         }
 
     return insights
-
-@app.route('/inventory_insights')
-def inventory_insights():
-    lead_time_weeks = 2  # Example: 2 weeks lead time
-    service_level = 0.95  # 95% service level
-    insights = calculate_inventory_insights(inventory, forecast_results, lead_time_weeks, service_level)
-    return render_template('inventory_insights.html', insights=insights)
-
-
-@app.route('/inventory_insights')
-def inventory_insights():
-    lead_time_weeks = 2
-    service_level = 0.95
-    insights = calculate_inventory_insights(inventory, forecast_results, lead_time_weeks, service_level)
-    return render_template('inventory_insights.html', insights=insights)
-
 @app.route('/etl_explanation')
 def etl_explanation():
     return render_template('etl_explanation.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
 
