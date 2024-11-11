@@ -58,8 +58,8 @@ API Endpoints
 
 
 File Structure
-i. app.py: Main application file.
-ii. data/: Contains stock.xlsx and pastorders.xlsx files.
+(i) app.py: Main application file.
+(ii) data/: Contains stock.xlsx and pastorders.xlsx files.
 iii. static/: Stores generated forecast plot images.
 iv. templates/: HTML templates for rendering views.
 
