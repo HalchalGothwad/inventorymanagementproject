@@ -32,7 +32,8 @@ pip install -r requirements.txt
 
 
 Configuration
-Power BI URL: Update the power_bi_url in the code with your Power BI report's embed link.
+Power BI URL: Update the power_bi_url in the code with your Power BI report's embed link.  
+
 Usage
 Run the application:
 bash
@@ -47,20 +48,20 @@ ARIMA Forecasting: Generates a 4-month forecast for each product based on past o
 Inventory Insights Calculation: Uses safety stock and EOQ calculations to recommend stock levels and reorder points.
 Plot Forecast: Plots forecast vs. actual data for visual analysis.
 API Endpoints
-/: Homepage showing inventory and forecast results.
-/add_product: Adds a new product to inventory.
-/update_stock: Updates stock for an existing product.
-/subtract_stock: Reduces stock for an existing product.
-/view_forecast: Displays forecasted demand vs. actual data.
-/inventory_insights: Shows inventory insights for reorder points and stockout risks.
-/etl_explanation: Explanation of the ETL process.
+1. /: Homepage showing inventory and forecast results.
+2. /add_product: Adds a new product to inventory.
+3. /update_stock: Updates stock for an existing product.
+4. /subtract_stock: Reduces stock for an existing product.
+5. /view_forecast: Displays forecasted demand vs. actual data.
+6. /inventory_insights: Shows inventory insights for reorder points and stockout risks.
+7. /etl_explanation: Explanation of the ETL process.
 
 
 File Structure
-app.py: Main application file.
-data/: Contains stock.xlsx and pastorders.xlsx files.
-static/: Stores generated forecast plot images.
-templates/: HTML templates for rendering views.
+i. app.py: Main application file.
+ii. data/: Contains stock.xlsx and pastorders.xlsx files.
+iii. static/: Stores generated forecast plot images.
+iv. templates/: HTML templates for rendering views.
 
 
 Acknowledgements
